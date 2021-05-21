@@ -16,7 +16,7 @@ TAG_NAME=${CONTAINER_TAG:="latest"}
 export SEVERITY_THRESHOLD=${SNYK_SEVERITY_THRESHOLD:="critical"}
 
 ## set organisation
-snyk config set org=deliveroo
+snyk config set org=${SNYK_ORG}
 
 parse_and_post_comment () {
   scan_results=$(parse_scan_results $1)
