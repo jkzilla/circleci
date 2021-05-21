@@ -29,8 +29,10 @@ RUN apt update \
     npm \
     && python3 -m pip install --upgrade pip \
     && pip install awscli==${AWSCLI_VERSION} docker-compose==${COMPOSE_VERSION} \
-    && npm install -g snyk
-
+    && curl -s https://api.github.com/repos/snyk/snyk/releases/1.605.0 | grep "browser_download_url" \
+    | grep linux | cut -d '"' -f 4 | tr '\n' '\0' \
+    | xargs -0 -n1 curl -s -L -O && sha256sum -c snyk-linux.sha256 && \
+    mv snyk-linux /usr/local/bin/snyk && chmod +x /usr/local/bin/snyk
 
 ADD tests /tests
 
