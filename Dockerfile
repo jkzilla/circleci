@@ -4,6 +4,8 @@ FROM debian as extractor
 # the DKMS module and other stuff for running the server.
 # Only install the docker client binary.
 ENV DOCKER_VERSION=18.09.3
+ENV SNYK_VERSION=1.605.0
+
 RUN apt update && apt install -y curl \
     && curl https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz | \
     tar xzvf - -C /
@@ -29,8 +31,7 @@ RUN apt update \
     npm \
     && python3 -m pip install --upgrade pip \
     && pip install awscli==${AWSCLI_VERSION} docker-compose==${COMPOSE_VERSION} \
-    && npm install -g snyk
-
+    && npm install -g snyk@${SNYK_VERSION}
 
 ADD tests /tests
 
