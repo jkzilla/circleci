@@ -4,7 +4,7 @@ FROM debian as extractor
 # the DKMS module and other stuff for running the server.
 # Only install the docker client binary.
 ENV DOCKER_VERSION=18.09.3
-ENV SNYK_VERSION=1.605.0
+ENV SNYK_VERSION=1.625.0
 
 RUN apt update && apt install -y curl \
     && curl https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz | \
@@ -46,5 +46,6 @@ ADD scripts/push_lambda.sh /usr/bin/push_lambda
 ADD scripts/wait-for-it.sh /usr/bin/wfi
 ADD scripts/common /usr/bin/common
 ADD scripts/container_scan.sh /usr/bin/scan_container_vulnerabilities
+ADD scripts/iac_scan.sh /usr/bin/scan_iac_vulnerabilities
 ADD scripts/comment_on_pr.js /usr/bin/comment_on_pr
 ADD scripts/parse_scan_results.js /usr/bin/parse_scan_results

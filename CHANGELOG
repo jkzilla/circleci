@@ -1,3 +1,8 @@
+0.6.5
+---
+
+Added script that scanned Infrastructure as code ( iac ) template files.  SNYK_SEVERITY_THRESHOLD env var to 'high' ( until 'critical' supported ).
+
 0.6.4
 ---
 

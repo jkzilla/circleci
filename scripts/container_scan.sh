@@ -10,8 +10,14 @@ if [ -z "${GITHUB_SNYK_TOKEN}" ]; then
   exit 1
 fi
 
+## check Dockerfile found to scan
+if [ ! -f "${CIRCLE_WORKING_DIRECTORY}/Dockerfile" ]; then
+  echo "[!]${CIRCLE_WORKING_DIRECTORY}/Dockerfile not found"
+  exit 1
+fi
+
 ## set threshold to critical
-export SEVERITY_THRESHOLD=${SNYK_SEVERITY_THRESHOLD:="critical"}
+export SEVERITY_THRESHOLD=${SNYK_SEVERITY_THRESHOLD:="high"}
 
 TAG_NAME=${CONTAINER_TAG:="latest"}
 
@@ -30,9 +36,6 @@ snyk auth ${SNYK_TOKEN}
 ## set organisation
 snyk config set org=${SNYK_ORG}
 
-## set project path
-PROJECT_PATH=$(eval echo ${CIRCLE_WORKING_DIRECTORY})
-
 ## set tag
 SNYK_FNAME=snyk.json
 
@@ -40,7 +43,7 @@ SNYK_FNAME=snyk.json
 docker image tag ${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1} ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME}
 
 ## test 
-snyk test --severity-threshold=${SEVERITY_THRESHOLD} --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} --file=${PROJECT_PATH}/Dockerfile --json > "${PROJECT_PATH}/${SNYK_FNAME}"
+snyk test --severity-threshold=${SEVERITY_THRESHOLD} --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} --file="${CIRCLE_WORKING_DIRECTORY}/Dockerfile" --json > "${PROJECT_PATH}/${SNYK_FNAME}"
 
 echo "[*] Finished snyk test. Moving onto monitor"
 

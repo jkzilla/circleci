@@ -36,9 +36,6 @@ PROJECT_PATH=$(eval echo ${CIRCLE_WORKING_DIRECTORY})
 ## set tag
 SNYK_FNAME=snyk.json
 
-## lets retag the image
-docker image tag ${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1} ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME}
-
 ## test 
 snyk iac test --severity-threshold=${SEVERITY_THRESHOLD} --json > "${PROJECT_PATH}/${SNYK_FNAME}"
 
