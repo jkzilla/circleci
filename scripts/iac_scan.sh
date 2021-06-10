@@ -11,7 +11,7 @@ if [ -z "${GITHUB_SNYK_TOKEN}" ]; then
 fi
 
 ## set threshold to "high" as critical not yet supported in Snyk iac
-export SEVERITY_THRESHOLD=${SNYK_SEVERITY_THRESHOLD:="high"}
+export SEVERITY_THRESHOLD=${SNYK_SEVERITY_THRESHOLD:="med"}
 
 TAG_NAME=${CONTAINER_TAG:="latest"}
 
