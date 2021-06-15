@@ -39,19 +39,18 @@ SNYK_FNAME=snyk.json
 ## lets retag the image
 docker image tag ${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1} ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME}
 
-## test 
-snyk test --severity-threshold=${SEVERITY_THRESHOLD} --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} --file=${PROJECT_PATH}/Dockerfile --json > "${PROJECT_PATH}/${SNYK_FNAME}"
+## test the repos language dependencies ( not the container )
+echo "[*]starting snyk test of progamming language(s). Looking for manifest files..."
+snyk test --severity-threshold=${SEVERITY_THRESHOLD} --all-projects --remote-repo-url="${CIRCLE_REPOSITORY_URL}" --json > "${PROJECT_PATH}/${SNYK_FNAME}"
 
-echo "[*] Finished snyk test. Moving onto monitor"
+## send language dependencies scan result to Snyk
+snyk monitor --all-projects --remote-repo-url="${CIRCLE_REPOSITORY_URL}"
 
-## monitor
-snyk monitor --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} --file="${PROJECT_PATH}/Dockerfile"
-
-echo "[*] Finished snyk monitoring. Checking if we need to send results to GitHub"
-
-## parse results and check if we should comment back to GitHub
+echo "[*]Checking if we need to send results to GitHub"
 if [[ -z "${CIRCLE_PULL_REQUEST}" ]]; then
-  echo "Not a pull request. Exiting"
+  echo "[*]Not a pull request. Exiting"
 else
   parse_and_post_comment "${PROJECT_PATH}/${SNYK_FNAME}"
+  ## Scan for Container vulnerabilities, which takes longer [ and can result in a lot of unresolvable issues ]
+  snyk monitor --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} --file="${PROJECT_PATH}/Dockerfile"
 fi
