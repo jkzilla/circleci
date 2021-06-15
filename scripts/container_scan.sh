@@ -33,20 +33,20 @@ snyk config set org=${SNYK_ORG}
 ## set tag
 SNYK_FNAME=snyk.json
 
+## set file location of scan results
+export RESULTS=${HOME}/${SNYK_FNAME}
+
 ## test the repos language dependencies ( not the container )
 echo "[*]starting snyk test of progamming language(s). Looking for manifest files..."
-snyk test --severity-threshold=${SEVERITY_THRESHOLD} --all-projects --remote-repo-url="${CIRCLE_REPOSITORY_URL}" --json > "${HOME}/${SNYK_FNAME}"
+snyk test --severity-threshold=${SEVERITY_THRESHOLD} --all-projects --remote-repo-url="${CIRCLE_REPOSITORY_URL}" --json > ${RESULTS}
 
 ## send language dependencies scan result to Snyk
 snyk monitor --all-projects --remote-repo-url="${CIRCLE_REPOSITORY_URL}"
-
-snyk monitor --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} --file="${CIRCLE_WORKING_DIRECTORY}/Dockerfile"
 
 echo "[*]Checking if we need to send results to GitHub"
 if [[ -z "${CIRCLE_PULL_REQUEST}" ]]; then
   echo "[*]Not a pull request. Exiting"
 else
-  parse_and_post_comment "${HOME}/${SNYK_FNAME}"
-  ## Scan for Container vulnerabilities, which takes longer [ and can result in a lot of unresolvable issues ]
+  parse_and_post_comment "${RESULTS}"
   snyk monitor --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} --file="${CIRCLE_WORKING_DIRECTORY}/Dockerfile"
 fi
