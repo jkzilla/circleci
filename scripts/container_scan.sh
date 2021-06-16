@@ -38,15 +38,16 @@ export RESULTS=${HOME}/${SNYK_FNAME}
 
 ## test the repos language dependencies ( not the container )
 echo "[*]starting snyk test of progamming language(s). Looking for manifest files..."
-snyk test --severity-threshold=${SEVERITY_THRESHOLD} --all-projects --remote-repo-url="${CIRCLE_REPOSITORY_URL}" --json > ${RESULTS}
+snyk test --severity-threshold=${SEVERITY_THRESHOLD} --all-projects --remote-repo-url="${CIRCLE_REPOSITORY_URL}"
 
 ## send language dependencies scan result to Snyk
 snyk monitor --all-projects --remote-repo-url="${CIRCLE_REPOSITORY_URL}"
 
-echo "[*]Checking if we need to send results to GitHub"
+## test the repos language dependencies ( not the container )
+echo "[*]Checking if results should be sent to GitHub"
 if [[ -z "${CIRCLE_PULL_REQUEST}" ]]; then
-  echo "[*]Not a pull request. Exiting"
+  echo "[*]Not a pull request"
 else
+  snyk test --severity-threshold=${SEVERITY_THRESHOLD} --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} --file=${HOME}/Dockerfile --json > ${RESULTS}
   parse_and_post_comment "${RESULTS}"
-  snyk monitor --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} --file="${CIRCLE_WORKING_DIRECTORY}/Dockerfile"
 fi
