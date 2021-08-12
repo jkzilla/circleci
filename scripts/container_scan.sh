@@ -11,9 +11,7 @@ if [ -z "${GITHUB_SNYK_TOKEN}" ]; then
 fi
 
 ## set threshold to critical
-export SEVERITY_THRESHOLD=${SNYK_SEVERITY_THRESHOLD:="critical"}
-
-TAG_NAME=${CONTAINER_TAG:="latest"}
+export SEVERITY_THRESHOLD=${SNYK_SEVERITY_THRESHOLD:="high"}
 
 parse_and_post_comment () {
   scan_results=$(parse_scan_results $1)
@@ -30,24 +28,26 @@ snyk auth ${SNYK_TOKEN}
 ## set organisation
 snyk config set org=${SNYK_ORG}
 
-## set tag
-SNYK_FNAME=snyk.json
-
 ## set file location of scan results
+SNYK_FNAME=snyk.json
 export RESULTS=${HOME}/${SNYK_FNAME}
 
-## test the repos language dependencies ( not the container )
-echo "[*]starting snyk test of progamming language(s). Looking for manifest files..."
-snyk test --severity-threshold=${SEVERITY_THRESHOLD} --all-projects --remote-repo-url="${CIRCLE_REPOSITORY_URL}"
-
-## send language dependencies scan result to Snyk
-snyk monitor --all-projects --remote-repo-url="${CIRCLE_REPOSITORY_URL}"
+# Search for all language manifest filesand scan the dependencies ( i.e. gemfile.lock, poetry.lock, etc )
+echo "[*]Snyk test of progamming language(s). Looking for manifest files..."
+snyk monitor --severity-threshold=${SEVERITY_THRESHOLD} --all-projects
 
 ## test the repos language dependencies ( not the container )
 echo "[*]Checking if results should be sent to GitHub"
 if [[ -z "${CIRCLE_PULL_REQUEST}" ]]; then
   echo "[*]Not a pull request"
 else
-  snyk test --severity-threshold=${SEVERITY_THRESHOLD} --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} --file=${HOME}/Dockerfile --json > ${RESULTS}
+  echo "[!]A pull request. Decoration of PR attempted for ${SEVERITY_THRESHOLD} issues"
+  snyk container test \
+    --severity-threshold=${SEVERITY_THRESHOLD} \
+    --docker debian \
+    --file=Dockerfile \
+    --exclude-base-image-vulns \
+    --file=${HOME}/Dockerfile \
+    --json > ${RESULTS}
   parse_and_post_comment "${RESULTS}"
 fi
