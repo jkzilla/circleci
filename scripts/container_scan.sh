@@ -19,6 +19,9 @@ snyk auth ${SNYK_TOKEN}
 ## set organisation
 snyk config set org=${SNYK_ORG}
 
+## Find location of primary Dockerfile
+DF_LOCATION=$(find . -name "Dockerfile" | head -n 1)
+
 # Search for all language manifest filesand scan the dependencies ( i.e. gemfile.lock, poetry.lock, etc )
 echo "[*]Snyk test of progamming language(s). Looking for manifest files..."
 snyk monitor --severity-threshold=${SEVERITY_THRESHOLD} --all-projects
@@ -32,5 +35,5 @@ else
     --severity-threshold=${SEVERITY_THRESHOLD} \
     --docker debian \
     --exclude-base-image-vulns \
-    --file=${HOME}/Dockerfile
+    --file=${DF_LOCATION}
 fi
