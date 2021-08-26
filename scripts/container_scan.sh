@@ -36,12 +36,12 @@ export RESULTS=${HOME}/${SNYK_FNAME}
 echo "[*]Snyk test of progamming language(s). Looking for manifest files..."
 snyk monitor --severity-threshold=${SEVERITY_THRESHOLD} --all-projects
 
-## test the repos language dependencies ( not the container )
 echo "[*]Checking if results should be sent to GitHub"
 if [[ -z "${CIRCLE_PULL_REQUEST}" ]]; then
-  echo "[*]Not a pull request"
+  echo "[*]Not a pull request. No action."
 else
-  echo "[!]A pull request. Decoration of PR attempted for ${SEVERITY_THRESHOLD} issues"
+  echo "[*]A pull request. Decoration of PR attempted for ${SEVERITY_THRESHOLD} issues."
+  echo "[*]Not reporting Base Image vulnerabilities, by design."
   snyk container test \
     --severity-threshold=${SEVERITY_THRESHOLD} \
     --docker debian \
