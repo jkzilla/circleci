@@ -1,3 +1,8 @@
+0.6.5
+---
+
+Added golang to allow Snyk's cli tool to better scan golang projects
+
 0.6.4
 ---
 

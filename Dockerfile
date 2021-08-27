@@ -29,6 +29,7 @@ RUN apt update \
     zip \
     nodejs \
     npm \
+    golang-go \
     && python3 -m pip install --upgrade pip \
     && pip install awscli==${AWSCLI_VERSION} docker-compose==${COMPOSE_VERSION} \
     && npm install -g snyk@${SNYK_VERSION}
