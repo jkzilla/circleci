@@ -23,8 +23,9 @@ snyk config set org=${SNYK_ORG}
 DF_LOCATION=$(find . -name "Dockerfile" | head -n 1)
 
 # Search for all language manifest filesand scan the dependencies ( i.e. gemfile.lock, poetry.lock, etc )
+# the --command flag is only parsed for Python projects
 echo "[*]Snyk test of progamming language(s). Looking for manifest files..."
-snyk monitor --severity-threshold=${SEVERITY_THRESHOLD} --all-projects
+snyk monitor --severity-threshold=${SEVERITY_THRESHOLD} --all-projects --command=python3
 
 if [[ -z "${CIRCLE_PULL_REQUEST}" ]]; then
   echo "[*]Not a pull request. No action."

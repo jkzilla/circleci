@@ -1,13 +1,18 @@
-0.6.5
+
+0.6.6
 ---
 
 Re-orientates the Snyk CLI tool usage to scan for issues that are found in language manifest files.
-In addition, this speeds up build times [ by removing the long running container scan, unless it is a Pull Request ].
+
+0.6.5
+---
+
+Added golang to allow Snyk's cli tool to better scan golang projects
 
 0.6.4
 ---
 
-Updated SNYK_SEVERITY_THRESHOLD env var to `critical` only as per Snyk recommendation ( https://support.snyk.io/hc/en-us/articles/360020021058-Critical-severity-migration ).
+Updated SNYK_SEVERITY_THRESHOLD env var to `critical` only as per Snyk recommendation ( <https://support.snyk.io/hc/en-us/articles/360020021058-Critical-severity-migration> ).
 
 0.6.3
 ---
