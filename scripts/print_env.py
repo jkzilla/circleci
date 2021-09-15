@@ -24,10 +24,13 @@ Usage: print_env <target>
 def print_env(target):
 
     prefix = "%s_" % target
+    prefixed_vars = [(name, value) for name, value in os.environ.items() if name.startswith(prefix)]
+    
+    if len(prefixed_vars) == 0:
+        print("No variables found starting with %s_" % target, file=sys.stderr)
+        sys.exit(1)
 
-    for name, value in os.environ.items():
-        if not name.startswith(prefix):
-            continue
+    for name, value in prefixed_vars:
         new_name = name[len(prefix):]
         print("export %s=%s" % (new_name, value))
 
