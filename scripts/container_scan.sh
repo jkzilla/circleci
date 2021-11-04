@@ -5,24 +5,8 @@ if [ -z "${SNYK_TOKEN}" ]; then
   exit 1
 fi
 
-if [ -z "${GITHUB_SNYK_TOKEN}" ]; then
-  echo "Please set GITHUB_SNYK_TOKEN variable in CircleCI project settings"
-  exit 1
-fi
-
 ## set threshold to critical
-export SEVERITY_THRESHOLD=${SNYK_SEVERITY_THRESHOLD:="critical"}
-
-TAG_NAME=${CONTAINER_TAG:="latest"}
-
-parse_and_post_comment () {
-  scan_results=$(parse_scan_results $1)
-  if [[ $scan_results ]]; then
-      comment_on_pr "$scan_results"
-  else
-    echo "No scan results found in $1."
-  fi
-}
+export SEVERITY_THRESHOLD=${SNYK_SEVERITY_THRESHOLD:="high"}
 
 ## auth
 snyk auth ${SNYK_TOKEN}
@@ -30,28 +14,25 @@ snyk auth ${SNYK_TOKEN}
 ## set organisation
 snyk config set org=${SNYK_ORG}
 
-## set project path
-PROJECT_PATH=$(eval echo ${CIRCLE_WORKING_DIRECTORY})
+## set disableSuggestions
+snyk config set disableSuggestions=true
 
-## set tag
-SNYK_FNAME=snyk.json
+## Find location of primary Dockerfile
+DF_LOCATION=$(find . -name "Dockerfile" | head -n 1)
 
-## lets retag the image
-docker image tag ${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1} ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME}
+# Search for all language manifest filesand scan the dependencies ( i.e. gemfile.lock, poetry.lock, etc )
+# the --command flag is only parsed for Python projects
+echo "[*]Snyk test of progamming language(s). Looking for manifest files..."
+snyk monitor --severity-threshold=${SEVERITY_THRESHOLD} --all-projects --command=python3
 
-## test 
-snyk test --severity-threshold=${SEVERITY_THRESHOLD} --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} --file=${PROJECT_PATH}/Dockerfile --json > "${PROJECT_PATH}/${SNYK_FNAME}"
-
-echo "[*] Finished snyk test. Moving onto monitor"
-
-## monitor
-snyk monitor --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} --file="${PROJECT_PATH}/Dockerfile"
-
-echo "[*] Finished snyk monitoring. Checking if we need to send results to GitHub"
-
-## parse results and check if we should comment back to GitHub
 if [[ -z "${CIRCLE_PULL_REQUEST}" ]]; then
-  echo "Not a pull request. Exiting"
+  echo "[*]Not a pull request. No action."
 else
-  parse_and_post_comment "${PROJECT_PATH}/${SNYK_FNAME}"
+  echo "[*]A pull request. Printing issues with a ${SEVERITY_THRESHOLD} or higher."
+  echo "[*]Not reporting Base Image vulnerabilities, by design."
+  snyk container test \
+    --severity-threshold=${SEVERITY_THRESHOLD} \
+    --docker debian \
+    --exclude-base-image-vulns \
+    --file=${DF_LOCATION}
 fi
