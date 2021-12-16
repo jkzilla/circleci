@@ -1,0 +1,27 @@
+# eclipse
+build
+.classpath
+.project
+.settings
+.worksheet
+
+# intellij idea
+*.log
+*.iml
+*.ipr
+*.iws
+.idea
+
+# mac
+.DS_Store
+
+# other?
+.history
+.cache
+.cache-main
+
+#general
+*.class
+
+.env*
+docker/

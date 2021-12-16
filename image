@@ -1,3 +1,21 @@
 #!/usr/bin/env sh
 
-echo ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:$(cat VERSION)
+[ "$SPECIALIZATION" = "base" ] && unset SPECIALIZATION
+
+CMD=$1
+
+shift 1
+
+case $CMD in
+  df)
+    [ -n "$SPECIALIZATION" ] && echo "Dockerfile_$SPECIALIZATION" || echo Dockerfile
+    ;;
+  tag)
+    read VERSION < VERSION
+    [ -n "$SPECIALIZATION" ] && VERSION=$VERSION-$SPECIALIZATION
+    echo "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:$VERSION"
+    ;;
+  tar)
+    echo "${1:-workspace}/${CIRCLE_SHA1}.tar"
+    ;;
+esac

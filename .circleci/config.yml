@@ -1,124 +1,224 @@
+version: 2.1
+
 # GLOBAL-ANCHORS - DockerHub Authentication changes applied - PROD-1431 / PROD-1435
 global_context: &global_context
   context:
     - org-global
-global_remote_docker: &global_remote_docker
-  version: 19.03.13
+
 global_dockerhub_auth: &global_dockerhub_auth
   auth:
     username: $GLOBAL_DOCKERHUB_USERNAME
     password: $GLOBAL_DOCKERHUB_PASSWORD
 
+global_remote_docker: &global_remote_docker
+  version: 19.03.13
+
+setup_remote_docker_with_caching: &setup_remote_docker_with_caching
+  setup_remote_docker:
+    <<: *global_remote_docker
+    docker_layer_caching: true
+
+parameters:
+  specialization:
+    type: string
+    default: base
+
 defaults: &defaults
   working_directory: /circleci
   docker:
-    - image: docker:17.06.0-ce-git
+    - image: docker:20.10-git
       <<: *global_dockerhub_auth
+  environment:
+    SPECIALIZATION: << pipeline.parameters.specialization >>
 
-version: 2
+# Step snippets
 
-jobs:
-  01_build_image:
-    <<: *defaults
+load_image: &load_image
+  name: Load Docker image
+  command: |
+    set -ex
+    docker load --input $(./image tar)
 
+# Branch filter snippets
+
+job_for_deployments: &job_for_deployments
+  filters:
+    branches:
+      only:
+        - sandbox
+        - staging
+        - master
+        - main
+
+# Workflow filter snippets
+
+only_base_condition: &only_base_condition
+  matches:
+    pattern: "^base$"
+    value: << pipeline.parameters.specialization >>
+
+only_base: &only_base
+  when: *only_base_condition
+
+specialize_scala: &specialize_scala
+  when:
+    matches:
+      pattern: "^(scala|all)$"
+      value: << pipeline.parameters.specialization >>
+
+commands:
+  build_image:
     steps:
-      - setup_remote_docker:
-          reusable: true
-
+      - *setup_remote_docker_with_caching
       - checkout
-
       - run:
           name: Build Docker image
           command: |
             set -ex
-            docker build -t $(./image) .
-
+            docker build --build-arg BASE_VERSION=$(cat VERSION) -t $(./image tag) -f $(./image df) .
       - run:
           name: Save Docker image
           command: |
             set -ex
             mkdir -p workspace
-            docker save $(./image) --output workspace/${CIRCLE_SHA1}.tar
-
+            docker save $(./image tag) --output $(./image tar)
       - persist_to_workspace:
           root: workspace
           paths:
             - '*.tar'
 
-  02_test_image:
-    <<: *defaults
-
+  test_image:
     steps:
-      - setup_remote_docker:
-          reusable: true
-
+      - *setup_remote_docker_with_caching
       - checkout
-
       - attach_workspace:
           at: workspace
-
-      - run: &import_image
-          name: Import Docker image
-          command: |
-            set -ex
-            docker load --input workspace/${CIRCLE_SHA1}.tar
-
+      - run:
+          <<: *load_image
       - run:
           name: Check if dependecies are installed
           command: |
             set -ex
-            docker run "$(./image)" '/tests/tests.sh'
+            docker run ${SPECIALIZATION:+-e SPECIALIZATION=$SPECIALIZATION} "$(./image tag)" '/tests/tests.sh'
 
-  03_push_image:
-    <<: *defaults
-
+  push_image:
     steps:
       - add_ssh_keys:
           fingerprints:
             # Stored in 1password "Team:Release Eng"
             # vault `id_rsa_circleci_circleci`
             - "5e:7e:b1:3a:b0:65:dc:7c:07:52:fd:dd:a2:87:02:fc"
-
-      - setup_remote_docker:
-          reusable: true
-
+      - *setup_remote_docker_with_caching
       - checkout
-
       - attach_workspace:
           at: workspace
-
       - run:
-          <<: *import_image
-
-      - run:
-          name: Tag the git commit
-          command: |
-            # This fails if the tag already exists
-            # preventing a push to the docker hub.
-            git tag "$(cat VERSION)"
-            git push --tags
-
+          <<: *load_image
+      - when:
+          condition: *only_base_condition
+          steps:
+            - run:
+                name: Tag the git commit
+                command: |
+                  # This fails if the tag already exists
+                  # preventing a push to the docker hub.
+                  git tag "$(cat VERSION)"
+                  git push --tags
       - run:
           name: Log in to Docker repository
           command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-
       - run:
           name: Push the image
-          command: docker push $(./image)
+          command: docker push $(./image tag)
+
+  trigger_specialized:
+    parameters:
+      specializations:
+        type: string
+    steps:
+      - checkout
+      - run:
+          name: "Trigger specialized builds: << parameters.specializations >>"
+          command: |
+            set -x
+
+            apk update && apk upgrade && apk add --no-cache ca-certificates curl yq
+
+            for specialization in << parameters.specializations >>; do
+                scripts/ci_trigger.sh check $specialization \
+                    && scripts/ci_trigger.sh exec $specialization
+            done
+
+jobs:
+  build_image:
+    <<: *defaults
+    steps:
+      - build_image
+
+  test_image:
+    <<: *defaults
+    steps:
+      - test_image
+
+  push_image:
+    <<: *defaults
+    steps:
+      - push_image
+
+  trigger_specialized:
+    <<: *defaults
+    steps:
+      - trigger_specialized:
+          specializations: scala
 
 workflows:
   version: 2
-  test:
-    jobs:
-      - 01_build_image
-      - 02_test_image:
-          requires:
-            - 01_build_image
-      - 03_push_image:
-          requires:
-            - 02_test_image
-          filters:
-            branches:
-              only:
-                - master
 
+  test:
+    <<: *only_base
+    jobs:
+      - build_image:
+          <<: *global_context
+      - test_image:
+          <<: *global_context
+          requires:
+            - build_image
+      - push_image:
+          <<: *global_context
+          <<: *job_for_deployments
+          requires:
+            - test_image
+
+  base:
+    <<: *only_base
+    jobs:
+      - build_image:
+          <<: *global_context
+      - test_image:
+          <<: *global_context
+          requires:
+            - build_image
+      - push_image:
+          <<: *global_context
+          <<: *job_for_deployments
+          requires:
+            - test_image
+      - trigger_specialized:
+          <<: *global_context
+          requires:
+            - push_image
+
+  scala:
+    <<: *specialize_scala
+    jobs:
+      - build_image:
+          <<: *global_context
+      - test_image:
+          <<: *global_context
+          requires:
+            - build_image
+      - push_image:
+          <<: *global_context
+          <<: *job_for_deployments
+          requires:
+            - build_image

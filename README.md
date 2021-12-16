@@ -189,7 +189,7 @@ In order to use `push_image_to_docker_hub` in your CircleCI pipeline, add a step
 
 ## Custom helper: `print_env`
 
-`print_env` is a Python script which takes prefix and replaces prefixed environment variables with their non-prefixed versions. You're always meant to exec it in-place for the changes to be made to the current shell.:
+`print_env` is a bash script which takes prefix and replaces prefixed environment variables with their non-prefixed versions. You're always meant to exec it in-place for the changes to be made to the current shell:
 
 ```yaml
 - run:

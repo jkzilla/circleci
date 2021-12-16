@@ -1,0 +1,52 @@
+ARG BASE_VERSION
+#FROM deliveroo/circleci:$BASE_VERSION AS sdkman
+FROM circleci:$BASE_VERSION AS sdkman
+
+# The `-l` flag here is necessary to load `.bashrc` and
+# thus initialize sdk, java and sbt on the PATH
+SHELL ["/bin/bash", "-lc"]
+
+# Install sdkman
+
+RUN curl -s "https://get.sdkman.io" | bash
+RUN sdk version
+
+ENV BASH_ENV /root/.bashrc
+
+LABEL purpose=sdkman
+
+FROM sdkman AS scala-builder
+
+# Install Java & SBT via sdkman
+
+ARG JAVA_DISTRO=adpt
+ARG JAVA_VERSION=11
+
+ARG SBT_VERSION=1.5.7
+
+RUN mkdir -p /opt/workspace
+
+WORKDIR /opt/workspace
+
+ENV JAVA_DISTRO=$JAVA_DISTRO
+ENV JAVA_VERSION=$JAVA_VERSION
+
+ENV DISTROS="(\
+    [adpt]='$JAVA_VERSION\.[0-9]+\.[0-9]+\.hs-adpt' \
+    [amzn]='$JAVA_VERSION\.[0-9]+\.[0-9]+\.[0-9]+.[0-9]+-amzn' \
+    [grl]='[0-9]+\.[0-9]+\.[0-9]+\.r$JAVA_VERSION-grl' \
+    [open]='$JAVA_VERSION\.[0-9]+\.[0-9]+-open' \
+    [zulu]='$JAVA_VERSION\.[0-9]+\.[0-9]+-zulu' \
+)"
+
+RUN > >(tee -a build.log) sdk broadcast; \
+    declare -Ax DISTROS=$DISTROS; \
+    export JAVA_TARGET=$(sdk list java | grep $JAVA_DISTRO | grep -Po "${DISTROS[$JAVA_DISTRO]}" | head -1); \
+    > >(tee -a build.log) echo "Installing Java $JAVA_VERSION [$JAVA_DISTRO - ${JAVA_TARGET:?target not detected}]..."; \
+    > >(tee -a build.log) sdk install java $JAVA_TARGET; \
+    > >(tee -a build.log) sdk install sbt $SBT_VERSION; \
+    > >(tee -a build.log) sbt sbtVersion
+
+LABEL purpose=scala-builder
+
+ENTRYPOINT ["/bin/bash"]

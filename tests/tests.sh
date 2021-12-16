@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -ex
 
 command -v ci
@@ -15,3 +16,7 @@ docker-compose version
 docker --version
 python3 --version
 aws --version
+
+if [[ "$SPECIALIZATION" = "scala" ]]; then
+    sbt --version
+fi
