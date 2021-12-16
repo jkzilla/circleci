@@ -16,8 +16,12 @@ COPY --from=extractor /docker/docker /usr/bin/docker
 ENV AWSCLI_VERSION=1.18.19
 ENV COMPOSE_VERSION=1.25.4
 
-RUN apt update \
-    && apt install -y \
+# SBT env variables ( required for Snyk CLI to scan Scala projects )
+ENV SBT_VERSION 1.5.2
+ENV SBT_HOME /usr/local/sbt
+ENV PATH $PATH:$SBT_HOME/bin
+
+RUN apt-get update && apt-get install -y \
     bash \
     curl \
     git \
@@ -32,6 +36,11 @@ RUN apt update \
     && python3 -m pip install --upgrade pip \
     && pip install awscli==${AWSCLI_VERSION} docker-compose==${COMPOSE_VERSION} \
     && npm install -g snyk
+
+RUN apt-get update && apt-get install -y \
+    default-jdk \
+    scala \
+    && curl -sL "https://github.com/sbt/sbt/releases/download/v$SBT_VERSION/sbt-$SBT_VERSION.tgz" | gunzip | tar -x -C /usr/local
 
 ADD tests /tests
 

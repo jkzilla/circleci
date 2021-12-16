@@ -1,3 +1,8 @@
+0.7.2BETA
+---
+
+Add OpenJDK, Scala and SBT to allow dependency scanning with Snyk-CLI.
+
 0.7.1
 ---
 
