@@ -18,5 +18,6 @@ python3 --version
 aws --version
 
 if [[ "$SPECIALIZATION" = "scala" ]]; then
+    java -version
     sbt --version
 fi

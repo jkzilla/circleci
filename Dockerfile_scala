@@ -1,6 +1,6 @@
 ARG BASE_VERSION
-#FROM deliveroo/circleci:$BASE_VERSION AS sdkman
-FROM circleci:$BASE_VERSION AS sdkman
+
+FROM deliveroo/circleci:$BASE_VERSION AS sdkman
 
 # The `-l` flag here is necessary to load `.bashrc` and
 # thus initialize sdk, java and sbt on the PATH

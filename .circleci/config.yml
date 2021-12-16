@@ -221,4 +221,4 @@ workflows:
           <<: *global_context
           <<: *job_for_deployments
           requires:
-            - build_image
+            - test_image
