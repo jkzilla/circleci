@@ -2,20 +2,67 @@
 
 [ "$SPECIALIZATION" = "base" ] && unset SPECIALIZATION
 
+__usage() {
+    >&2 cat <<EOF
+Usage: $0 [-b] (dockerfile|version|tag|tar)
+    -b      Switch all operations to base-image semantics
+
+    dockerfile  Print the name of the Dockerfile for this build e.g.:
+                    ``Dockerfile`` for ``base``
+                    ``Dockerfile_spec`` for specialization ``spec``
+                Alias: ``df``
+
+    version     Print the version for this build e.g.:
+                    ``x.y.z`` for ``base``
+                    ``x.y.z-spec`` for ``spec``
+                Alias: ``ver``
+
+    tag         Print the image tag for this build e.g.:
+                    ``deliveroo/circleci:x.y.z`` for ``base``
+                    ``deliveroo/circleci:x.y.z-spec`` for ``spec``
+
+    tar         Print the name of a TAR file used for image import/export; unaffected by specializations
+EOF
+}
+
+__version() {
+    local VERSION
+    read VERSION < VERSION
+    [ -n "$SPECIALIZATION" ] && VERSION=$VERSION-$SPECIALIZATION
+    echo $VERSION
+}
+
+while getopts ":b" OPT; do
+    case $OPT in
+        b)
+            unset SPECIALIZATION
+            ;;
+        *)
+            __usage && false
+            ;;
+    esac || exit 1
+done
+
+shift $((OPTIND-1))
+
 CMD=$1
 
 shift 1
 
 case $CMD in
-  df)
-    [ -n "$SPECIALIZATION" ] && echo "Dockerfile_$SPECIALIZATION" || echo Dockerfile
-    ;;
-  tag)
-    read VERSION < VERSION
-    [ -n "$SPECIALIZATION" ] && VERSION=$VERSION-$SPECIALIZATION
-    echo "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:$VERSION"
-    ;;
-  tar)
-    echo "${1:-workspace}/${CIRCLE_SHA1}.tar"
-    ;;
-esac
+    df|dockerfile)
+        [ -n "$SPECIALIZATION" ] && echo "Dockerfile_$SPECIALIZATION" || echo Dockerfile
+        ;;
+    ver|version)
+        __version
+        ;;
+    tag)
+        echo "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:$(__version)"
+        ;;
+    tar)
+        echo "${1:-workspace}/${CIRCLE_SHA1}.tar"
+        ;;
+    *)
+        __usage && false
+        ;;
+esac || exit 1

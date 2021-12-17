@@ -16,7 +16,7 @@ __exec() {
         --url https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pipeline \
         --header "Circle-Token: $TOKEN" \
         --header 'content-type: application/json' \
-        --data @- <<EOF | grep -qP '^HTTP.+ 2\d{2}'
+        --data @- <<EOF | grep -qE '^HTTP.+ 2\d{2}'
 {
   "branch": "$CIRCLE_BRANCH",
   "parameters": {

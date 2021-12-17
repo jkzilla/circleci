@@ -25,8 +25,12 @@ parameters:
 
 defaults: &defaults
   working_directory: /circleci
+  parameters:
+    executor_image:
+      type: string
+      default: docker:20.10-git
   docker:
-    - image: docker:20.10-git
+    - image: << parameters.executor_image >>
       <<: *global_dockerhub_auth
   environment:
     SPECIALIZATION: << pipeline.parameters.specialization >>
@@ -37,7 +41,9 @@ load_image: &load_image
   name: Load Docker image
   command: |
     set -ex
+    docker image list
     docker load --input $(./image tar)
+    docker image list
 
 # Branch filter snippets
 
@@ -52,13 +58,11 @@ job_for_deployments: &job_for_deployments
 
 # Workflow filter snippets
 
-only_base_condition: &only_base_condition
-  matches:
-    pattern: "^base$"
-    value: << pipeline.parameters.specialization >>
-
 only_base: &only_base
-  when: *only_base_condition
+  when:
+    matches:
+      pattern: "^base$"
+      value: << pipeline.parameters.specialization >>
 
 specialize_scala: &specialize_scala
   when:
@@ -75,13 +79,14 @@ commands:
           name: Build Docker image
           command: |
             set -ex
-            docker build --build-arg BASE_VERSION=$(cat VERSION) -t $(./image tag) -f $(./image df) .
+            docker build --build-arg BASE_VERSION=$(./image -b ver) -t $(./image tag) -f $(./image df) .
       - run:
           name: Save Docker image
           command: |
             set -ex
             mkdir -p workspace
             docker save $(./image tag) --output $(./image tar)
+            docker image list
       - persist_to_workspace:
           root: workspace
           paths:
@@ -114,16 +119,11 @@ commands:
           at: workspace
       - run:
           <<: *load_image
-      - when:
-          condition: *only_base_condition
-          steps:
-            - run:
-                name: Tag the git commit
-                command: |
-                  # This fails if the tag already exists
-                  # preventing a push to the docker hub.
-                  git tag "$(cat VERSION)"
-                  git push --tags
+      - run:
+          name: Tag the git commit
+          command: |
+            git tag "$(./image version)"
+            git push --tags
       - run:
           name: Log in to Docker repository
           command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
