@@ -174,21 +174,6 @@ jobs:
 workflows:
   version: 2
 
-  test:
-    <<: *only_base
-    jobs:
-      - build_image:
-          <<: *global_context
-      - test_image:
-          <<: *global_context
-          requires:
-            - build_image
-      - push_image:
-          <<: *global_context
-          <<: *job_for_deployments
-          requires:
-            - test_image
-
   base:
     <<: *only_base
     jobs:
