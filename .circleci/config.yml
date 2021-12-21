@@ -116,7 +116,7 @@ commands:
           name: Load Docker image
           command: |
             set -ex
-            docker load --input $(./image tag)
+            docker load --input workspace/${CIRCLE_SHA1}.tar
       - run:
           name: Scan container vulnerabilities
           command: scan_container_vulnerabilities
