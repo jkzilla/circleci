@@ -19,7 +19,7 @@ snyk config set disableSuggestions=true
 
 # Set env variables for Container Scanning
 # First, find location of primary Dockerfile
-# Second, tag the image to ensure Container Scan points to correct Docker Image
+# Second, re-tag the image to ensure Container Scan points to correct Docker Image
 export DF_LOCATION=$(find . -name "Dockerfile" | head -n 1)
 export TAG_NAME=${CONTAINER_TAG:="latest"}
 
@@ -32,13 +32,13 @@ snyk monitor --severity-threshold=${SEVERITY_THRESHOLD} --all-projects --command
 
 
 # Monitor for Docker image issues on PR or merge to Master/Main as this step takes minutes
-if [[ -z "${CIRCLE_PULL_REQUEST}" ] || [ "$CIRCLE_BRANCH" = "master" ] || [ "$CIRCLE_BRANCH" = "main" ]]; then
+if [ -z "${CIRCLE_PULL_REQUEST}" ] || [ "$CIRCLE_BRANCH" = "master" ] || [ "$CIRCLE_BRANCH" = "main" ]; then
   echo "[*]Container scan about to start..."
   echo "[*]Looking for issues with a ${SEVERITY_THRESHOLD} or higher."
   snyk container monitor \
     --severity-threshold=${SEVERITY_THRESHOLD} \
     --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} \
-    --file=${DF_LOCATION}
+    --file=${DF_LOCATION} \
     --exclude-base-image-vulns
-  echo "[*]Send results to Snyk."
+  echo "[*]Scan results sent to Snyk."
 fi
