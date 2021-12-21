@@ -107,7 +107,6 @@ commands:
             docker run ${SPECIALIZATION:+-e SPECIALIZATION=$SPECIALIZATION} "$(./image tag)" '/tests/tests.sh'
 
   scan_image:
-    <<: *defaults
     steps:
       - *setup_remote_docker_with_caching
       - checkout
@@ -173,6 +172,11 @@ jobs:
     steps:
       - test_image
 
+  scan_image:
+    <<: *defaults
+    steps:
+      - scan_image
+
   push_image:
     <<: *defaults
     steps:
@@ -193,6 +197,10 @@ workflows:
       - build_image:
           <<: *global_context
       - test_image:
+          <<: *global_context
+          requires:
+            - build_image
+      - scan_image:
           <<: *global_context
           requires:
             - build_image
