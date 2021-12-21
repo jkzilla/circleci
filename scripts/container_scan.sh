@@ -17,22 +17,28 @@ snyk config set org=${SNYK_ORG}
 ## set disableSuggestions
 snyk config set disableSuggestions=true
 
-## Find location of primary Dockerfile
-DF_LOCATION=$(find . -name "Dockerfile" | head -n 1)
+# Set env variables for Container Scanning
+# First, find location of primary Dockerfile
+# Second, tag the image to ensure Container Scan points to correct Docker Image
+export DF_LOCATION=$(find . -name "Dockerfile" | head -n 1)
+export TAG_NAME=${CONTAINER_TAG:="latest"}
 
+
+# Always monitor for language dependencies
 # Search for all language manifest filesand scan the dependencies ( i.e. gemfile.lock, poetry.lock, etc )
 # the --command flag is only parsed for Python projects
 echo "[*]Snyk test of progamming language(s). Looking for manifest files..."
 snyk monitor --severity-threshold=${SEVERITY_THRESHOLD} --all-projects --command=python3
 
-if [[ -z "${CIRCLE_PULL_REQUEST}" ]]; then
-  echo "[*]Not a pull request. No action."
-else
-  echo "[*]A pull request. Printing issues with a ${SEVERITY_THRESHOLD} or higher."
-  echo "[*]Not reporting Base Image vulnerabilities, by design."
-  snyk container test \
+
+# Monitor for Docker image issues on PR or merge to Master/Main as this step takes minutes
+if [[ -z "${CIRCLE_PULL_REQUEST}" ] || [ "$CIRCLE_BRANCH" = "master" ] || [ "$CIRCLE_BRANCH" = "main" ]]; then
+  echo "[*]Container scan about to start..."
+  echo "[*]Looking for issues with a ${SEVERITY_THRESHOLD} or higher."
+  snyk container monitor \
     --severity-threshold=${SEVERITY_THRESHOLD} \
-    --docker debian \
-    --exclude-base-image-vulns \
+    --docker ${CIRCLE_PROJECT_REPONAME}:${TAG_NAME} \
     --file=${DF_LOCATION}
+    --exclude-base-image-vulns
+  echo "[*]Send results to Snyk."
 fi
