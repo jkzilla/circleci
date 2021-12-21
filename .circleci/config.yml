@@ -113,8 +113,6 @@ commands:
       - attach_workspace:
           at: .
       - run:
-          <<: *load_image
-      - run:
           name: Load Docker image
           command: |
             set -ex
