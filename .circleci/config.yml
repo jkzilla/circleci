@@ -115,6 +115,11 @@ commands:
       - run:
           <<: *load_image
       - run:
+          name: Load Docker image
+          command: |
+            set -ex
+            docker load --input $(./image tag)
+      - run:
           name: Scan container vulnerabilities
           command: scan_container_vulnerabilities
 
