@@ -23,7 +23,6 @@ snyk config set disableSuggestions=true
 export DF_LOCATION=$(find . -name "Dockerfile" | head -n 1)
 export TAG_NAME=${CONTAINER_TAG:="latest"}
 
-
 # Always monitor for language dependencies
 # Search for all language manifest filesand scan the dependencies ( i.e. gemfile.lock, poetry.lock, etc )
 # the --command flag is only parsed for Python projects

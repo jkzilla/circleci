@@ -106,6 +106,19 @@ commands:
             set -ex
             docker run ${SPECIALIZATION:+-e SPECIALIZATION=$SPECIALIZATION} "$(./image tag)" '/tests/tests.sh'
 
+  scan_image:
+    <<: *defaults
+    steps:
+      - *setup_remote_docker_with_caching
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          <<: *load_image
+      - run:
+          name: Scan container vulnerabilities
+          command: scan_container_vulnerabilities
+
   push_image:
     steps:
       - add_ssh_keys:
@@ -199,6 +212,10 @@ workflows:
       - build_image:
           <<: *global_context
       - test_image:
+          <<: *global_context
+          requires:
+            - build_image
+      - scan_image:
           <<: *global_context
           requires:
             - build_image

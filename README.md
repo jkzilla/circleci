@@ -211,9 +211,9 @@ In order to use `push_image_to_docker_hub` in your CircleCI pipeline, add a step
 
 Additional args:
 
-- `NO_COMMENT` overrides the default behaviour of commenting back to the PR
-- `CONTAINER_TAG` sets a custom tag for container images 
-- `SNYK_SEVERITY_THRESHOLD` sets the threshold for the severity of the vulnerabilities to report back to the user. Possible values are: `low`, `medium`, `high` or `critical`. Defaults to `critical`. Snyk's rating [reference](https://support.snyk.io/hc/en-us/articles/360020021058-Critical-severity-migration).
+* `NO_COMMENT` overrides the default behaviour of commenting back to the PR.
+* `CONTAINER_TAG` sets a custom tag for container images.
+* `SNYK_SEVERITY_THRESHOLD` sets the threshold for the severity of the vulnerabilities to report back to the user. Possible values are: `low`, `medium`, `high` or `critical`. Defaults to `High`. Snyk's rating [reference](https://support.snyk.io/hc/en-us/articles/360020021058-Critical-severity-migration).
 
 ## Future work
 
