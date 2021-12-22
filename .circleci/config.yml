@@ -55,6 +55,7 @@ job_for_deployments: &job_for_deployments
         - staging
         - master
         - main
+        - shift_snyk_container_scanning_to_monitor_v2
 
 # Workflow filter snippets
 
