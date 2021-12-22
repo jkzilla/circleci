@@ -114,7 +114,7 @@ commands:
           name: Build Docker image
           command: |
             set -ex
-            docker build --build-arg BASE_VERSION=$(./image -b ver) -t $(./image tag) -f $(./image df) .
+            docker build -t $(./image tag) -f $(./image df) .
       - run:
           name: Echo image tag
           command: |
