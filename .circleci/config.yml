@@ -104,7 +104,7 @@ commands:
           name: Check if dependecies are installed
           command: |
             set -ex
-            docker run "$(./image tag)" '/tests/tests.sh'
+            docker run ${SPECIALIZATION:+-e SPECIALIZATION=$SPECIALIZATION} "$(./image tag)" '/tests/tests.sh'
 
   push_image:
     steps:
