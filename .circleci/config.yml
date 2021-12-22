@@ -211,6 +211,7 @@ workflows:
             - build_image
       - scan_image:
           <<: *global_context
+          requires:
             - build_image
       - push_image:
           <<: *global_context
