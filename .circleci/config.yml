@@ -104,7 +104,7 @@ commands:
           name: Check if dependecies are installed
           command: |
             set -ex
-            docker run ${SPECIALIZATION:+-e SPECIALIZATION=$SPECIALIZATION} "$(./image tag)" '/tests/tests.sh'
+            docker run "$(./image tag)" '/tests/tests.sh'
 
   scan_image:
     steps:
@@ -114,6 +114,17 @@ commands:
           at: workspace
       - run:
           <<: *load_image
+      - run:
+          name: Echo image tag
+          shell: /bin/bash
+          command: |
+            "$(./image tag)"
+      - run:
+          name: Docker run to prepare for Security Scan
+          command: |
+            set -ex
+            docker run -t deliveroo/${CIRCLE_PROJECT_REPONAME}:0.8.4 '/usr/bin/scan_container_vulnerabilities'
+
       - run:
           name: Scan container vulnerabilities
           command: scan_container_vulnerabilities
