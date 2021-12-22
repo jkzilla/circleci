@@ -110,10 +110,11 @@ commands:
     steps:
       - *setup_remote_docker_with_caching
       - checkout
-      - attach_workspace:
-          at: workspace
-      - run: 
-          <<: *load_image
+      - run:
+          name: Build Docker image
+          command: |
+            set -ex
+            docker build --build-arg BASE_VERSION=$(./image -b ver) -t $(./image tag) -f $(./image df) .
       - run:
           name: Echo image tag
           command: |
@@ -206,8 +207,6 @@ workflows:
             - build_image
       - scan_image:
           <<: *global_context
-          requires:
-            - build_image
       - push_image:
           <<: *global_context
           <<: *job_for_deployments
