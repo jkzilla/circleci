@@ -122,7 +122,7 @@ commands:
           name: Docker run to prepare for Security Scan
           command: |
             set -ex
-            docker run -t deliveroo/${CIRCLE_PROJECT_REPONAME}:0.8.4 '/usr/bin/scan_container_vulnerabilities'
+            docker run -t "$(./image tag)" --env SNYK_TOKEN=${SNYK_TOKEN} '/usr/bin/scan_container_vulnerabilities'
 
       - run:
           name: Scan for container and language dependency vulnerabilities
