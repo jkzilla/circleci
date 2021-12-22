@@ -106,27 +106,6 @@ commands:
             set -ex
             docker run "$(./image tag)" '/tests/tests.sh'
 
-  scan_image:
-    steps:
-      - *setup_remote_docker_with_caching
-      - checkout
-      - attach_workspace:
-          at: workspace
-      - run:
-          <<: *load_image
-      - run:
-          name: Echo image tag
-          command: |
-            echo "$(./image tag)"
-      - run:
-          name: Scan for container and language dependency vulnerabilities
-          command: |
-            set -ex
-            docker run \
-              -t "$(./image tag)" \
-              --env SNYK_TOKEN=${SNYK_TOKEN} \
-              -v $(./image df) \
-              ls
   push_image:
     steps:
       - add_ssh_keys:
@@ -181,11 +160,6 @@ jobs:
     steps:
       - test_image
 
-  scan_image:
-    <<: *defaults
-    steps:
-      - scan_image
-
   push_image:
     <<: *defaults
     steps:
@@ -209,10 +183,6 @@ workflows:
           <<: *global_context
           requires:
             - build_image
-      - scan_image:
-          <<: *global_context
-          requires:
-            - build_image
       - push_image:
           <<: *global_context
           <<: *job_for_deployments
@@ -229,10 +199,6 @@ workflows:
       - build_image:
           <<: *global_context
       - test_image:
-          <<: *global_context
-          requires:
-            - build_image
-      - scan_image:
           <<: *global_context
           requires:
             - build_image
