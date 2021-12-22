@@ -116,7 +116,6 @@ commands:
           <<: *load_image
       - run:
           name: Echo image tag
-          shell: /bin/bash
           command: |
             "$(./image tag)"
       - run:
@@ -126,7 +125,7 @@ commands:
             docker run -t deliveroo/${CIRCLE_PROJECT_REPONAME}:0.8.4 '/usr/bin/scan_container_vulnerabilities'
 
       - run:
-          name: Scan container vulnerabilities
+          name: Scan for container and language dependency vulnerabilities
           command: scan_container_vulnerabilities
 
   push_image:
