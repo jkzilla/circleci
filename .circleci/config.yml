@@ -119,12 +119,6 @@ commands:
           command: |
             echo "$(./image tag)"
       - run:
-          name: Docker run to prepare for Security Scan
-          command: |
-            set -ex
-            docker run -t "$(./image tag)" --env SNYK_TOKEN=${SNYK_TOKEN} '/usr/bin/scan_container_vulnerabilities'
-
-      - run:
           name: Scan for container and language dependency vulnerabilities
           command: scan_container_vulnerabilities
 
