@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs: 
+  snyk: snyk/snyk@1.1.2
+
 # GLOBAL-ANCHORS - DockerHub Authentication changes applied - PROD-1431 / PROD-1435
 global_context: &global_context
   context:
@@ -80,6 +83,9 @@ commands:
           command: |
             set -ex
             docker build --build-arg BASE_VERSION=$(./image -b ver) -t $(./image tag) -f $(./image df) .
+            export IMAGE_NAME=5e928e342034
+      - snyk/scan:
+          docker-image-name: $IMAGE_NAME      
       - run:
           name: Save Docker image
           command: |
@@ -104,8 +110,29 @@ commands:
           name: Check if dependecies are installed
           command: |
             set -ex
-            docker run ${SPECIALIZATION:+-e SPECIALIZATION=$SPECIALIZATION} "$(./image tag)" '/tests/tests.sh'
+            docker run "$(./image tag)" '/tests/tests.sh'
 
+  scan_image:
+    steps:
+      - *setup_remote_docker_with_caching
+      - checkout
+      - attach_workspace:
+          at: workspace
+      - run:
+          <<: *load_image
+      - run:
+          name: Echo image tag
+          command: |
+            echo "$(./image tag)"
+      - run:
+          name: Scan for container and language dependency vulnerabilities
+          command: |
+            set -ex
+            docker run \
+              -t "$(./image tag)" \
+              --env SNYK_TOKEN=${SNYK_TOKEN} \
+              -v $(./image df) \
+              ls
   push_image:
     steps:
       - add_ssh_keys:
@@ -160,6 +187,11 @@ jobs:
     steps:
       - test_image
 
+  scan_image:
+    <<: *defaults
+    steps:
+      - scan_image
+
   push_image:
     <<: *defaults
     steps:
@@ -183,6 +215,10 @@ workflows:
           <<: *global_context
           requires:
             - build_image
+      - scan_image:
+          <<: *global_context
+          requires:
+            - build_image
       - push_image:
           <<: *global_context
           <<: *job_for_deployments
@@ -199,6 +235,10 @@ workflows:
       - build_image:
           <<: *global_context
       - test_image:
+          <<: *global_context
+          requires:
+            - build_image
+      - scan_image:
           <<: *global_context
           requires:
             - build_image
