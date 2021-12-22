@@ -111,12 +111,9 @@ commands:
       - *setup_remote_docker_with_caching
       - checkout
       - attach_workspace:
-          at: .
+          at: workspace
       - run:
-          name: Load Docker image
-          command: |
-            set -ex
-            docker load --input workspace/${CIRCLE_SHA1}.tar
+          <<: *load_image
       - run:
           name: Scan container vulnerabilities
           command: scan_container_vulnerabilities
