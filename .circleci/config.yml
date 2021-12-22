@@ -110,19 +110,23 @@ commands:
     steps:
       - *setup_remote_docker_with_caching
       - checkout
+      - attach_workspace:
+          at: workspace
       - run:
-          name: Build Docker image
-          command: |
-            set -ex
-            docker build -t $(./image tag) -f $(./image df) .
+          <<: *load_image
       - run:
           name: Echo image tag
           command: |
             echo "$(./image tag)"
       - run:
           name: Scan for container and language dependency vulnerabilities
-          command: scan_container_vulnerabilities
-
+          command: |
+            set -ex
+            docker run \
+              -t "$(./image tag)" \
+              --env SNYK_TOKEN=${SNYK_TOKEN} \
+              -v $(./image df) \
+              ls
   push_image:
     steps:
       - add_ssh_keys:
@@ -207,6 +211,7 @@ workflows:
             - build_image
       - scan_image:
           <<: *global_context
+            - build_image
       - push_image:
           <<: *global_context
           <<: *job_for_deployments
