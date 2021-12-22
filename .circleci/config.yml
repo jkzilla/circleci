@@ -112,12 +112,12 @@ commands:
       - checkout
       - attach_workspace:
           at: workspace
-      - run:
+      - run: 
           <<: *load_image
       - run:
           name: Echo image tag
           command: |
-            "$(./image tag)"
+            echo "$(./image tag)"
       - run:
           name: Docker run to prepare for Security Scan
           command: |
